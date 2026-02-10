@@ -73,46 +73,10 @@ export function MyProfileScreen({ onBack, onNavigate }: MyProfileScreenProps) {
   const [measurements, setMeasurements] = useState(() => {
     const saved = localStorage.getItem('profileMeasurements');
     return saved ? JSON.parse(saved) : {
-      top: {
-        'Bust': '38',
-        'Shoulder Width': '16',
-        'Sleeve Length': '24',
-        'Armhole': '14',
-        'Blouse Length': '15',
-        'Front Neck Depth': '7',
-        'Back Neck Depth': '5',
-        'Bust Point to Point': '8',
-      },
-      bottom: {
-        'Waist': '32',
-        'Hip': '40',
-        'Thigh': '22',
-        'Knee': '15',
-        'Ankle Opening': '12',
-        'Inseam Length': '30',
-        'Outseam Length': '42',
-        'Rise': '11',
-      },
-      ethnic: {
-        'Bust': '38',
-        'Waist': '32',
-        'Hip': '40',
-        'Shoulder Width': '16',
-        'Blouse Length': '15',
-        'Sleeve Length': '24',
-        'Lehenga Length': '42',
-        'Saree Fall Length': '45',
-      },
-      formal: {
-        'Bust': '38',
-        'Waist': '32',
-        'Hip': '40',
-        'Shoulder Width': '16',
-        'Dress Length': '42',
-        'Sleeve Length': '24',
-        'Underbust': '34',
-        'Armhole': '14',
-      }
+      top: {},
+      bottom: {},
+      ethnic: {},
+      formal: {}
     };
   });
 
@@ -182,7 +146,21 @@ export function MyProfileScreen({ onBack, onNavigate }: MyProfileScreenProps) {
   // Save measurements to localStorage
   const saveMeasurements = () => {
     try {
-      localStorage.setItem('profileMeasurements', JSON.stringify(measurements));
+      // Filter out empty measurements before saving
+      const filteredMeasurements = { ...measurements };
+      Object.keys(filteredMeasurements).forEach(category => {
+        const categoryData = filteredMeasurements[category];
+        const filtered: Record<string, string> = {};
+        Object.entries(categoryData).forEach(([key, value]) => {
+          if (value && value.toString().trim() !== '') {
+            filtered[key] = value.toString();
+          }
+        });
+        filteredMeasurements[category] = filtered;
+      });
+      
+      localStorage.setItem('profileMeasurements', JSON.stringify(filteredMeasurements));
+      setMeasurements(filteredMeasurements);
       setShowSaveConfirmation(true);
       setTimeout(() => setShowSaveConfirmation(false), 2000);
       setIsEditingMeasurements(false);

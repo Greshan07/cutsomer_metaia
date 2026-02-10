@@ -1,7 +1,7 @@
-import { Home, ShoppingBag, Phone, MapPin, User } from 'lucide-react';
+import { Home, ShoppingBag, User } from 'lucide-react';
 
 interface BottomNavProps {
-  activeTab: 'home' | 'orders' | 'call' | 'store' | 'profile';
+  activeTab: 'home' | 'orders' | 'profile';
   onNavigate: (screen: string) => void;
   isDarkMode?: boolean;
 }
@@ -9,19 +9,12 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onNavigate, isDarkMode = false }: BottomNavProps) {
   const navItems = [
     { id: 'home', icon: Home, label: 'Home', screen: 'home' },
-    { id: 'orders', icon: ShoppingBag, label: 'Orders', screen: 'myOrders' },
-    { id: 'call', icon: Phone, label: 'Call', screen: 'call' },
-    { id: 'store', icon: MapPin, label: 'Store', screen: 'store' },
-    { id: 'profile', icon: User, label: 'Profile', screen: 'myProfile' },
+    { id: 'orders', icon: ShoppingBag, label: 'Orders', screen: 'orders' },
+    { id: 'profile', icon: User, label: 'Profile', screen: 'profile' },
   ];
 
   const handleNavClick = (item: typeof navItems[0]) => {
-    if (item.id === 'call') {
-      // Open phone dialer
-      window.location.href = 'tel:+919876543210';
-    } else {
-      onNavigate(item.screen);
-    }
+    onNavigate(item.screen);
   };
 
   return (

@@ -97,6 +97,10 @@ export const authAPI = {
   logout: () => {
     setAuthToken(null);
     localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('profileMeasurements');
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('profileImage');
   },
 
   getCurrentUser: () => {

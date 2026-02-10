@@ -71,13 +71,19 @@ export function LoginScreen({ onLogin, onNavigateToRegister, onNavigateToForgotP
   };
 
   const handleGoogleLogin = () => {
-    // Redirect to backend Google OAuth
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    // Redirect to backend Google OAuth - use dynamic URL based on current host
+    const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000'
+      : `http://${window.location.hostname}:5000`;
+    window.location.href = `${backendUrl}/api/auth/google`;
   };
 
   const handleAppleLogin = () => {
-    // Redirect to backend Apple OAuth
-    window.location.href = 'http://localhost:5000/api/auth/apple';
+    // Redirect to backend Apple OAuth - use dynamic URL based on current host
+    const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:5000'
+      : `http://${window.location.hostname}:5000`;
+    window.location.href = `${backendUrl}/api/auth/apple`;
   };
 
   return (

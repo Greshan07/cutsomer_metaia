@@ -273,10 +273,19 @@ export function SideMenu({ isOpen, onClose, onNavigate, isDarkMode = false }: Si
           {/* Logout Button */}
           <div className={`p-4 border-t-2 ${isDarkMode ? 'border-[#D4AF37]/30' : 'border-[#D4AF37]/30'}`}>
             <button 
-              onClick={() => {
-                authAPI.logout();
-                onNavigate('login');
-                onClose();
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                  authAPI.logout();
+                  onClose();
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 100);
+                } catch (error) {
+                  console.error('Logout error:', error);
+                  window.location.reload();
+                }
               }}
               className="w-full flex items-center justify-center gap-3 p-3 rounded-xl bg-[#7A1F1F] hover:bg-[#5A1515] text-white transition-all"
             >

@@ -30,47 +30,63 @@ export function OutfitDesignScreen({ orderType, category, style, onNext, onBack 
 
   const [referenceImages, setReferenceImages] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [selectedInspiration, setSelectedInspiration] = useState<string[]>([]);
 
-  // Get related inspiration images based on style
+  // Get all inspiration images for the selected style
   const getInspirationImages = () => {
-    if (!style) {
+    if (!style || !category) {
       return [];
     }
 
-    const normalizedStyle = style.toLowerCase().trim();
-    console.log('Looking for images for style:', style, 'normalized:', normalizedStyle);
-    
-    // Combine all dresses for searching
-    const allDresses = [...dressDataset.men, ...dressDataset.women, ...dressDataset.kids];
-    
-    // Try exact match first
-    let matchedDress = allDresses.find(dress => 
-      dress.name.toLowerCase() === normalizedStyle
-    );
+    // Map style names to folder names
+    const styleToFolder: Record<string, string> = {
+      // Men's
+      'Shirt': 'shirt',
+      'T-Shirt': 'shirt',
+      'Kurta': 'kurtha',
+      'Jacket': 'blazer',
+      'Blazer': 'blazer',
+      'Pants': 'pants_trousers',
+      'Jeans': 'pants_trousers',
+      'Suit': 'pathani suit',
+      'Sherwani': 'sherwani',
+      // Women's
+      'Blouse': 'blouse',
+      'Kurti': 'kurthi',
+      'Saree Blouse': 'blouse',
+      'Palazzo': 'pants_trousers',
+      'Salwar': 'salwar',
+      'Dress': 'dress',
+      'Lehenga': 'lehenga choli',
+      'Anarkali': 'anarkali',
+      'Salwar Kameez': 'suit',
+      'Gown': 'gown',
+      // Kids
+      'Shorts': 'shorts',
+      'Lehenga Choli': 'ghagra',
+    };
 
-    // Try partial match if exact match fails
-    if (!matchedDress) {
-      matchedDress = allDresses.find(dress => {
-        const dressName = dress.name.toLowerCase();
-        return dressName.includes(normalizedStyle) || normalizedStyle.includes(dressName);
-      });
-    }
+    const folderName = styleToFolder[style];
+    if (!folderName) return [];
 
-    if (matchedDress && matchedDress.images.length > 0) {
-      console.log('Found match:', matchedDress.name, 'with', matchedDress.images.length, 'images');
-      return matchedDress.images.slice(0, 3).map(img => img.url);
-    }
+    const categoryFolder = category === 'Children' ? 'KIDS' : category.toUpperCase();
+    const basePath = `/metaia_dataset/METAIA/Designs/${categoryFolder}/${folderName}`;
 
-    console.log('No match found for:', style);
-    // Default images if no match
-    return [
-      'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400',
-      'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400',
-      'https://images.unsplash.com/photo-1558769132-cb1aea2f01e2?w=400',
-    ];
+    // Generate paths for images 1-10
+    return Array.from({ length: 10 }, (_, i) => `${basePath}/${i + 1}.jpg`);
   };
 
   const inspirationImages = getInspirationImages();
+
+  const toggleInspirationSelection = (imageUrl: string) => {
+    setSelectedInspiration(prev => {
+      if (prev.includes(imageUrl)) {
+        return prev.filter(url => url !== imageUrl);
+      } else {
+        return [...prev, imageUrl];
+      }
+    });
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -140,7 +156,11 @@ export function OutfitDesignScreen({ orderType, category, style, onNext, onBack 
     normalizedStyle.includes('kameez');
 
   const handleNext = () => {
-    onNext({ outfitDetails: formData });
+    onNext({ 
+      outfitDetails: formData,
+      selectedInspiration,
+      uploadedReferences: imagePreviewUrls
+    });
   };
 
   return (
@@ -190,21 +210,56 @@ export function OutfitDesignScreen({ orderType, category, style, onNext, onBack 
 
           {/* Inspiration Images */}
           {inspirationImages.length > 0 && (
-            <div>
-              <label className="block text-sm font-medium text-[#7A1F1F] mb-3">Design Inspiration</label>
-              <div className="grid grid-cols-3 gap-3">
-                {inspirationImages.map((img, index) => (
-                  <div key={index} className="aspect-[3/4] rounded-xl overflow-hidden border-2 border-[#D4AF37]/30 hover:border-[#D4AF37] transition-all">
-                    <img
-                      src={img}
-                      alt={`${style} inspiration ${index + 1}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23F5E6D3" width="200" height="200"/%3E%3Ctext fill="%237A1F1F" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EImage%3C/text%3E%3C/svg%3E';
-                      }}
-                    />
-                  </div>
-                ))}
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 border border-[#D4AF37]/30">
+              <label className="block text-sm font-medium text-[#7A1F1F] mb-3">
+                Design Inspiration
+                {selectedInspiration.length > 0 && (
+                  <span className="ml-2 text-xs text-[#D4AF37]">({selectedInspiration.length} selected)</span>
+                )}
+              </label>
+              <div 
+                className="overflow-x-auto overflow-y-hidden pb-3 scroll-smooth"
+                style={{
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#D4AF37 transparent',
+                  WebkitOverflowScrolling: 'touch',
+                  touchAction: 'pan-x'
+                }}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchMove={(e) => e.stopPropagation()}
+              >
+                <div className="flex gap-3" style={{ width: 'max-content' }}>
+                  {inspirationImages.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => toggleInspirationSelection(img)}
+                      className={`relative rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
+                        selectedInspiration.includes(img)
+                          ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/50'
+                          : 'border-[#D4AF37]/30 hover:border-[#D4AF37]'
+                      }`}
+                      style={{ width: '160px', height: '220px' }}
+                    >
+                      <img
+                        src={img}
+                        alt={`${style} design ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23F5E6D3" width="200" height="200"/%3E%3Ctext fill="%237A1F1F" font-family="Arial" font-size="14" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3EImage%3C/text%3E%3C/svg%3E';
+                        }}
+                      />
+                      {selectedInspiration.includes(img) && (
+                        <div className="absolute inset-0 bg-[#D4AF37]/20 flex items-center justify-center">
+                          <div className="w-8 h-8 bg-[#D4AF37] rounded-full flex items-center justify-center">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
