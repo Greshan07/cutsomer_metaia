@@ -36,13 +36,26 @@ exports.createOrder = async (req, res) => {
     });
 
     // Create notification
-    await Notification.create({
+    const notification = await Notification.create({
       user: req.user.id,
       type: 'order',
       title: 'Order Placed Successfully',
       message: `Your order ${order.orderNumber} has been placed successfully with locked price of ₹${order.pricingBreakdown.finalTotal}.`,
       relatedOrder: order._id
     });
+
+    // 🔥 REAL-TIME: Emit notification to customer
+    if (req.socketService) {
+      req.socketService.emitNewNotification(req.user.id, notification);
+      
+      // Notify admin about new order
+      req.socketService.emitOrderUpdate(
+        order._id.toString(),
+        req.user.id,
+        order.tailor,
+        order
+      );
+    }
 
     res.status(201).json({
       status: 'success',
@@ -191,13 +204,27 @@ exports.updateOrderStatus = async (req, res) => {
     await order.save();
 
     // Create notification
-    await Notification.create({
+    const notification = await Notification.create({
       user: order.customer,
       type: 'order',
       title: 'Order Status Updated',
       message: `Your order ${order.orderNumber} status has been updated to ${status}.`,
       relatedOrder: order._id
     });
+
+    // 🔥 REAL-TIME: Emit updates to all relevant parties
+    if (req.socketService) {
+      // Notify customer
+      req.socketService.emitNewNotification(order.customer.toString(), notification);
+      
+      // Emit order update to customer, tailor, and admin
+      req.socketService.emitOrderUpdate(
+        order._id.toString(),
+        order.customer.toString(),
+        order.tailor,
+        order
+      );
+    }
 
     res.status(200).json({
       status: 'success',
