@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const passport = require('passport');
@@ -7,17 +8,28 @@ const passport = require('passport');
 dotenv.config();
 
 const connectDB = require('./config/database');
+const socketService = require('./services/socketService');
 require('./config/passport'); // Load passport configuration AFTER env vars
 
 // Connect to database
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+socketService.initialize(server);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Make socket service available in routes
+app.use((req, res, next) => {
+  req.socketService = socketService;
+  next();
+});
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -60,7 +72,8 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 METAIA Backend Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔌 Socket.IO enabled for real-time updates`);
 });
