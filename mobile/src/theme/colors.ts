@@ -1,0 +1,15 @@
+export const colors = {
+  goldLight: '#F5E6D3',
+  gold: '#D4AF37',
+  goldDark: '#C5A028',
+  maroon: '#7A1F1F',
+  maroonDark: '#1A0A0A',
+  white: '#FFFFFF',
+  black: '#000000',
+  muted: 'rgba(122, 31, 31, 0.7)',
+  mutedLight: 'rgba(122, 31, 31, 0.4)',
+  borderGold: 'rgba(212, 175, 55, 0.3)',
+  surface: 'rgba(255, 255, 255, 0.9)',
+  danger: '#D32F2F',
+  success: '#2E7D32',
+};

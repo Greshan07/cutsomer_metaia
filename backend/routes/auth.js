@@ -53,10 +53,18 @@ router.post('/logout', protect, authController.logout);
 
 // Google OAuth routes
 router.get('/google',
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    session: false 
-  })
+  (req, res, next) => {
+    // Pass redirect_uri through state parameter
+    const state = req.query.redirect_uri ? 
+      Buffer.from(JSON.stringify({ redirect_uri: req.query.redirect_uri })).toString('base64') : 
+      undefined;
+    
+    passport.authenticate('google', { 
+      scope: ['profile', 'email'],
+      session: false,
+      state: state
+    })(req, res, next);
+  }
 );
 
 router.get('/google/callback',
@@ -68,14 +76,42 @@ router.get('/google/callback',
     // Generate JWT token
     const token = generateToken(req.user._id);
     
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/success?token=${token}&name=${encodeURIComponent(req.user.name)}&email=${encodeURIComponent(req.user.email)}`);
+    // Get redirect URI from state parameter or fallback to frontend URL
+    let redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/success`;
+    
+    try {
+      if (req.query.state) {
+        const stateData = JSON.parse(Buffer.from(req.query.state, 'base64').toString());
+        if (stateData.redirect_uri) {
+          redirectUri = stateData.redirect_uri;
+        }
+      }
+    } catch (e) {
+      console.log('Could not parse state parameter:', e.message);
+    }
+    
+    // Build redirect URL with token
+    const separator = redirectUri.includes('?') ? '&' : '?';
+    const redirectUrl = `${redirectUri}${separator}token=${token}&name=${encodeURIComponent(req.user.name)}&email=${encodeURIComponent(req.user.email)}`;
+    
+    // Redirect to frontend or mobile app with token
+    res.redirect(redirectUrl);
   }
 );
 
 // Apple OAuth routes
 router.post('/apple',
-  passport.authenticate('apple', { session: false })
+  (req, res, next) => {
+    // Pass redirect_uri through state parameter
+    const state = req.query.redirect_uri ? 
+      Buffer.from(JSON.stringify({ redirect_uri: req.query.redirect_uri })).toString('base64') : 
+      undefined;
+    
+    passport.authenticate('apple', { 
+      session: false,
+      state: state
+    })(req, res, next);
+  }
 );
 
 router.post('/apple/callback',
@@ -87,8 +123,27 @@ router.post('/apple/callback',
     // Generate JWT token
     const token = generateToken(req.user._id);
     
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/success?token=${token}&name=${encodeURIComponent(req.user.name)}&email=${encodeURIComponent(req.user.email)}`);
+    // Get redirect URI from state parameter or fallback to frontend URL
+    let redirectUri = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/success`;
+    
+    try {
+      if (req.body.state || req.query.state) {
+        const stateParam = req.body.state || req.query.state;
+        const stateData = JSON.parse(Buffer.from(stateParam, 'base64').toString());
+        if (stateData.redirect_uri) {
+          redirectUri = stateData.redirect_uri;
+        }
+      }
+    } catch (e) {
+      console.log('Could not parse state parameter:', e.message);
+    }
+    
+    // Build redirect URL with token
+    const separator = redirectUri.includes('?') ? '&' : '?';
+    const redirectUrl = `${redirectUri}${separator}token=${token}&name=${encodeURIComponent(req.user.name)}&email=${encodeURIComponent(req.user.email)}`;
+    
+    // Redirect to frontend or mobile app with token
+    res.redirect(redirectUrl);
   }
 );
 

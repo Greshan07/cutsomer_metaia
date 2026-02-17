@@ -194,7 +194,13 @@ export function OutfitDesignScreen({ orderType, category, style, onNext, onBack 
       </div>
 
       {/* Content */}
-      <div className="relative z-10 px-6 pb-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      <div 
+        className="relative z-10 px-6 pb-6 overflow-y-auto" 
+        style={{ 
+          maxHeight: 'calc(100vh - 200px)',
+          overscrollBehavior: 'contain'
+        }}
+      >
         <div className="space-y-5">
           {/* Selected Garment - Display Only */}
           {category && style && (
@@ -218,15 +224,27 @@ export function OutfitDesignScreen({ orderType, category, style, onNext, onBack 
                 )}
               </label>
               <div 
-                className="overflow-x-auto overflow-y-hidden pb-3 scroll-smooth"
+                className="overflow-x-scroll overflow-y-hidden pb-3 -mx-4 px-4"
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: '#D4AF37 transparent',
                   WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-x'
+                  overscrollBehavior: 'contain auto'
                 }}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
+                onTouchStart={(e) => {
+                  const target = e.currentTarget;
+                  (target as any).touchStartX = e.touches[0].clientX;
+                  (target as any).scrollLeft = target.scrollLeft;
+                }}
+                onTouchMove={(e) => {
+                  const target = e.currentTarget;
+                  const touchX = e.touches[0].clientX;
+                  const walk = (touchX - (target as any).touchStartX);
+                  target.scrollLeft = (target as any).scrollLeft - walk;
+                  
+                  // Prevent page scroll
+                  e.preventDefault();
+                }}
               >
                 <div className="flex gap-3" style={{ width: 'max-content' }}>
                   {inspirationImages.map((img, index) => (
